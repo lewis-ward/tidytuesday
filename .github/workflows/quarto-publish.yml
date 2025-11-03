@@ -20,12 +20,12 @@ jobs:
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
         with:
-          version: '1.4.352'  # optional, latest stable
+          version: '1.6.3'
 
       - name: Render Quarto site
         uses: quarto-dev/quarto-actions/render@v2
         with:
-          path: .   # project root; Quarto reads _quarto.yml for output
+          path: .   
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
