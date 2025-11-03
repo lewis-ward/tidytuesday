@@ -19,15 +19,13 @@ jobs:
 
     - name: Setup Quarto
       uses: quarto-dev/quarto-actions/setup@v2
+      with:
+        version: '1.4.352'  # optional, latest stable
 
     - name: Render Quarto site
       uses: quarto-dev/quarto-actions/render@v2
       with:
-        path: .      # render the whole project
-        to: _site    # output folder
+        path: .
 
     - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./_site
+      uses: peaceiris/actions
