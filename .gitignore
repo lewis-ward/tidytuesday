@@ -9,22 +9,8 @@ _render_cache/
 *.utf8.md
 *.knit.md
 *.nb.html
+/.quarto/
 
 # -- sys
 .DS_Store
 Thumbs.db
-
-# -- output
-output/*
-!output/*.png
-!output/*.pdf
-
-# -- code data
-!code/
-!code/*
-!data/
-!data/*
-
-.Rproj.user
-
-/.quarto/
