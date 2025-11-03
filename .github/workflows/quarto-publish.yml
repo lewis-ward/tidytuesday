@@ -15,7 +15,7 @@ jobs:
     - name: Setup R
       uses: r-lib/actions/setup-r@v2
       with:
-        r-version: '4.3'  
+        r-version: '4.3'
 
     - name: Setup Quarto
       uses: quarto-dev/quarto-actions/setup@v2
@@ -23,9 +23,9 @@ jobs:
     - name: Render Quarto site
       uses: quarto-dev/quarto-actions/render@v2
       with:
-        execute: true
-        to: _site
-        
+        path: .      # render the whole project
+        to: _site    # output folder
+
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
       with:
