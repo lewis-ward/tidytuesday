@@ -34,7 +34,7 @@ jobs:
             "magrittr","broom","gridExtra","ggpmisc","rlang",
             "xfun","usethis","devtools","lubridate","ggdark"
           ))
-t
+          
       - name: Cache Quarto _site
         uses: actions/cache@v3
         with:
