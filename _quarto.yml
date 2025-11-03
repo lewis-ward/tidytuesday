@@ -1,0 +1,38 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - _index.qmd          # <- root landing page
+    - years/2025/_index.qmd     # <- year landing page
+    - years/2025/42/climate.qmd
+    - years/2025/43/literaryprize.qmd
+
+website:
+  title: "Tidytuesday portfolio"
+  navbar:
+    title: false
+    left:
+      - text: "Home"
+        href: "/"
+    right:
+      - icon: github
+        href: https://github.com/lewis-ward/tidytuesday
+      - text: "{{< iconify simple-icons bluesky >}}"
+        href: https://bsky.app/profile/ltjward.bsky.social
+    search: false
+
+  sidebar:
+    style: docked
+    contents: auto
+    collapse-level: 2
+  page-footer:
+    left: "Visualizations and analyses © Lewis TJ Ward<br>Data © respective sources via the tidytuesday repository"
+    border: true
+  bread-crumbs: true
+  page-navigation: true
+  reader-mode: false
+
+format:
+  html:
+    theme: cosmo
+    page-layout: article

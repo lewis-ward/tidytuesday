@@ -1,0 +1,10 @@
+---
+title: "Selected british literary prizes (1990-2022) analysis"
+---
+
+# Library
+
+```{r}
+pacman::p_load(here, fs, readxl, writexl, tidyverse, magrittr, broom, gridExtra, ggpmisc, rlang, xfun, usethis, devtools, lubridate)
+```
+

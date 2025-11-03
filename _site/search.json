@@ -1,0 +1,82 @@
+[
+  {
+    "objectID": "years/2025/43/literaryprize.html",
+    "href": "years/2025/43/literaryprize.html",
+    "title": "Selected british literary prizes (1990-2022) analysis",
+    "section": "",
+    "text": "Library\n\npacman::p_load(here, fs, readxl, writexl, tidyverse, magrittr, broom, gridExtra, ggpmisc, rlang, xfun, usethis, devtools, lubridate)",
+    "crumbs": [
+      "Home",
+      "Years",
+      "2025",
+      "43",
+      "Selected british literary prizes (1990-2022) analysis"
+    ]
+  },
+  {
+    "objectID": "years/2025/_index.html",
+    "href": "years/2025/_index.html",
+    "title": "2025",
+    "section": "",
+    "text": "Welcome to the 2025 Tidytuesday projects! Select a week from the sidebar.",
+    "crumbs": [
+      "Home",
+      "Years",
+      "2025",
+      "2025"
+    ]
+  },
+  {
+    "objectID": "_index.html",
+    "href": "_index.html",
+    "title": "Tidytuesday Projects",
+    "section": "",
+    "text": "Welcome to the Tidytuesday Projects site!\nSelect a year and week from the sidebar.",
+    "crumbs": [
+      "Home",
+      "Tidytuesday Projects"
+    ]
+  },
+  {
+    "objectID": "years/2025/42/climate.html",
+    "href": "years/2025/42/climate.html",
+    "title": "Historic UK meteorological & climate data",
+    "section": "",
+    "text": "Code\nplot_temp_change &lt;- temp_change |&gt;\n  ggplot(aes(x = country, y = change, fill = variable)) +\n  geom_col(position = position_dodge(width = 0.8), width = 0.7) +\n  geom_text(aes(label = change_label, hjust = ifelse(change &gt;= 0, -0.08, 1.08)),\n    position = position_dodge(width = 0.8),\n    size = 3.5, color = \"black\"\n  ) +\n  geom_hline(yintercept = 0, linetype = \"dashed\", color = \"grey20\", linewidth = 0.75) +\n  coord_flip(clip = \"off\") +\n  scale_fill_manual(values = c(\"Max Temp\" = \"#fdae61\", \"Min Temp\" = \"#91bfdb\"), name = NULL) +\n  scale_y_continuous(\n    expand = expansion(mult = c(0.15, 0.15)),\n    breaks = pretty_breaks(n = 8)\n  ) +\n  labs(\n    title = paste0(\"Change in mean annual temperature (\", earlystart, \"-\", earlyend, \" to \", recentstart, \"-\", recentend, \")\"),\n    subtitle = \"Average change in station temperatures per country\",\n    y = \"Change (°C)\", x = NULL,\n    caption = \"Averages attained by averaging at the station level for the period, then annually, then per country.\\nData: UK Met Office | Visualisation: Lewis TJ Ward\"\n  ) +\n  theme_classic(base_size = 14) +\n  theme(\n    plot.title = element_text(face = \"bold\", size = 18),\n    plot.subtitle = element_text(size = 11, margin = margin(b = 6)),\n    plot.caption = element_text(size = 9, color = \"grey50\"),\n    axis.text.y = element_text(size = 11),\n    axis.title.x = element_text(size = 11),\n    panel.grid.major.y = element_blank(),\n    panel.grid.major.x = element_line(color = \"grey90\", linewidth = 0.3),\n    legend.position = \"right\",\n    legend.key.size = unit(0.9, \"lines\"),\n    plot.margin = margin(8, 18, 8, 8)\n  )\n\nggsave(here(\"years\", \"2025\", \"42\", \"output\", \"mean annual temp changes.png\"),\n  plot = plot_temp_change, width = 10, height = 6, dpi = 300\n)\n\nplot_temp_change",
+    "crumbs": [
+      "Home",
+      "Years",
+      "2025",
+      "42",
+      "Historic UK meteorological & climate data"
+    ]
+  },
+  {
+    "objectID": "years/2025/42/climate.html#how-has-temperature-changed-over-time-accross-the-different-countries-in-the-uk",
+    "href": "years/2025/42/climate.html#how-has-temperature-changed-over-time-accross-the-different-countries-in-the-uk",
+    "title": "Historic UK meteorological & climate data",
+    "section": "",
+    "text": "Code\nplot_temp_change &lt;- temp_change |&gt;\n  ggplot(aes(x = country, y = change, fill = variable)) +\n  geom_col(position = position_dodge(width = 0.8), width = 0.7) +\n  geom_text(aes(label = change_label, hjust = ifelse(change &gt;= 0, -0.08, 1.08)),\n    position = position_dodge(width = 0.8),\n    size = 3.5, color = \"black\"\n  ) +\n  geom_hline(yintercept = 0, linetype = \"dashed\", color = \"grey20\", linewidth = 0.75) +\n  coord_flip(clip = \"off\") +\n  scale_fill_manual(values = c(\"Max Temp\" = \"#fdae61\", \"Min Temp\" = \"#91bfdb\"), name = NULL) +\n  scale_y_continuous(\n    expand = expansion(mult = c(0.15, 0.15)),\n    breaks = pretty_breaks(n = 8)\n  ) +\n  labs(\n    title = paste0(\"Change in mean annual temperature (\", earlystart, \"-\", earlyend, \" to \", recentstart, \"-\", recentend, \")\"),\n    subtitle = \"Average change in station temperatures per country\",\n    y = \"Change (°C)\", x = NULL,\n    caption = \"Averages attained by averaging at the station level for the period, then annually, then per country.\\nData: UK Met Office | Visualisation: Lewis TJ Ward\"\n  ) +\n  theme_classic(base_size = 14) +\n  theme(\n    plot.title = element_text(face = \"bold\", size = 18),\n    plot.subtitle = element_text(size = 11, margin = margin(b = 6)),\n    plot.caption = element_text(size = 9, color = \"grey50\"),\n    axis.text.y = element_text(size = 11),\n    axis.title.x = element_text(size = 11),\n    panel.grid.major.y = element_blank(),\n    panel.grid.major.x = element_line(color = \"grey90\", linewidth = 0.3),\n    legend.position = \"right\",\n    legend.key.size = unit(0.9, \"lines\"),\n    plot.margin = margin(8, 18, 8, 8)\n  )\n\nggsave(here(\"years\", \"2025\", \"42\", \"output\", \"mean annual temp changes.png\"),\n  plot = plot_temp_change, width = 10, height = 6, dpi = 300\n)\n\nplot_temp_change",
+    "crumbs": [
+      "Home",
+      "Years",
+      "2025",
+      "42",
+      "Historic UK meteorological & climate data"
+    ]
+  },
+  {
+    "objectID": "years/2025/42/climate.html#does-rainfall-change-across-the-different-countries-in-the-uk",
+    "href": "years/2025/42/climate.html#does-rainfall-change-across-the-different-countries-in-the-uk",
+    "title": "Historic UK meteorological & climate data",
+    "section": "Does rainfall change across the different countries in the UK?",
+    "text": "Does rainfall change across the different countries in the UK?\n\n\nCode\nplot_rain_anomaly_year &lt;- country_annual_rain |&gt;\n  ggplot(aes(x = year, y = rain_anomaly, fill = drought_flag)) +\n  geom_vline(xintercept = country_annual_rain$year, color = \"grey80\", linetype = \"dotted\", linewidth = 0.3) +\n  geom_col(width = 0.6) +\n  geom_text(\n    data = subset(country_annual_rain, drought_flag == \"&lt;5th percentile\"),\n    aes(\n      label = year,\n      vjust = ifelse(rain_anomaly &gt;= 0, -0.2, 1.2)\n    ), # proportional offset\n    size = 3.5,\n    fontface = \"bold\",\n    color = \"black\"\n  ) +\n  geom_hline(yintercept = 0, linetype = \"dashed\", color = \"grey20\", linewidth = 0.75) +\n  facet_wrap(~country, scales = \"fixed\") +\n  scale_x_continuous(breaks = seq(min(country_annual_rain$year),\n    max(country_annual_rain$year),\n    by = 5\n  )) +\n  scale_fill_manual(\n    values = c(\n      \"&lt;5th percentile\" = \"#d7191c\",\n      \"&lt;25th percentile\" = \"#fdae61\",\n      \"≥25th percentile\" = \"#91bfdb\"\n    ),\n    labels = c(\n      \"&lt;5th percentile\" = \"&lt;5th percentile\",\n      \"&lt;25th percentile\" = \"&lt;25th percentile\",\n      \"≥25th percentile\" = \"≥25th percentile\"\n    ),\n    name = \"Annual Rainfall\\nPercentile\"\n  ) +\n  scale_y_continuous(\n    expand = expansion(mult = c(0.15, 0.15)),\n    breaks = pretty_breaks(n = 8)\n  ) +\n  labs(\n    title = \"Average annual rainfall versus long-term mean per country (1989-2024)\",\n    subtitle = \"&lt;5th percentile years labeled in red; &lt;25th percentile years in orange\",\n    y = \"Difference from long-term average (mm)\", x = \"Year\",\n    caption = \"Difference calculated as annual rainfall minus long-term mean per station and country.\\nData source: UK Met Office | Visualisation: Lewis TJ Ward\"\n  ) +\n  theme_classic(base_size = 14) +\n  theme(\n    plot.title = element_text(face = \"bold\", size = 18),\n    # plot.subtitle = element_text(size = 11, margin = margin(b = 6)),\n    plot.caption = element_text(size = 9, color = \"grey50\"),\n    axis.text.x = element_text(angle = 45, hjust = 1),\n    axis.title.x = element_text(size = 11),\n    panel.grid.major.y = element_line(color = \"grey90\", linewidth = 0.3),\n    panel.grid.major.x = element_blank(),\n    legend.position = \"right\",\n    legend.key.size = unit(0.9, \"lines\"),\n    plot.margin = margin(8, 18, 8, 8),\n    strip.background = element_blank(),\n    strip.text = element_text(face = \"bold\", size = 12)\n  )\n\nggsave(here(\"years\", \"2025\", \"42\", \"output\", \"annual rainfall changes.png\"),\n  plot = plot_rain_anomaly_year, width = 11, height = 6, dpi = 300\n)\n\nplot_rain_anomaly_year",
+    "crumbs": [
+      "Home",
+      "Years",
+      "2025",
+      "42",
+      "Historic UK meteorological & climate data"
+    ]
+  }
+]

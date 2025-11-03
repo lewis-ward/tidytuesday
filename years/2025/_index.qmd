@@ -1,0 +1,6 @@
+---
+title: "2025"
+format: html
+---
+Welcome to the 2025 Tidytuesday projects!
+Select a week from the sidebar.

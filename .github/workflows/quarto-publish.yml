@@ -1,0 +1,36 @@
+name: "Quarto publish"
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          quarto-version: 'latest'
+
+      - name: Render site
+        uses: quarto-dev/quarto-actions/render@v2
+        with:
+          render-dir: '.'
+
+      - name: Publish to GitHub Pages
+        uses: quarto-dev/quarto-actions/publish@v2
+        with:
+          publish-branch: gh-pages
+          publish-dir: _site

@@ -1,0 +1,30 @@
+# -- r
+*.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# -- quarto
+_render_cache/
+*.utf8.md
+*.knit.md
+*.nb.html
+
+# -- sys
+.DS_Store
+Thumbs.db
+
+# -- output
+output/*
+!output/*.png
+!output/*.pdf
+
+# -- code data
+!code/
+!code/*
+!data/
+!data/*
+
+.Rproj.user
+
+/.quarto/
