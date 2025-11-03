@@ -7,20 +7,10 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    env:
-      R_LIBS_USER: ${{ runner.temp }}/R/${{ runner.os }}/library
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Cache R packages
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-packages-${{ hashFiles('**/*.qmd') }}
-          restore-keys: |
-            ${{ runner.os }}-r-packages-
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
@@ -47,4 +37,7 @@ jobs:
           to: _site
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/a
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
