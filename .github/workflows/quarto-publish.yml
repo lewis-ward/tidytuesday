@@ -32,15 +32,8 @@ jobs:
           install.packages(c(
             "scales","here","fs","readxl","writexl","tidyverse",
             "magrittr","broom","gridExtra","ggpmisc","rlang",
-            "xfun","usethis","devtools","lubridate","ggdark"
+            "xfun","usethis","devtools","lubridate","ggdark","knitr","rmarkdown"
           ))
-          
-      - name: Cache Quarto _site
-        uses: actions/cache@v3
-        with:
-          path: _site
-          key: quarto-site-${{ hashFiles('**/*.qmd') }}
-          restore-keys: quarto-site-
 
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
@@ -51,9 +44,7 @@ jobs:
         uses: quarto-dev/quarto-actions/render@v2
         with:
           path: .
+          to: _site
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
+        uses: peaceiris/a
