@@ -2,8 +2,8 @@ project:
   type: website
   output-dir: _site
   render:
-    - _index.qmd          # <- root landing page
-    - years/2025/_index.qmd     # <- year landing page
+    - _index.qmd
+    - years/2025/_index.qmd
     - years/2025/42/climate.qmd
     - years/2025/43/literaryprize.qmd
 
