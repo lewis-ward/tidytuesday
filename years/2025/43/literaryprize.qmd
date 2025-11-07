@@ -1,10 +1,488 @@
 ---
 title: "Selected british literary prizes (1990-2022) analysis"
+format:
+  html:
+    sidebar: true
+    code-fold: true
+page-layout: article
 ---
 
-# Library
+<!-- Setup -->
 
-```{r}
-pacman::p_load(here, fs, readxl, writexl, tidyverse, magrittr, broom, gridExtra, ggpmisc, rlang, xfun, usethis, devtools, lubridate)
+```{r library, include=FALSE}
+pacman::p_load(scales, here, tidyverse, lubridate)
 ```
 
+<!-- Get data -->
+
+```{r setup, include=FALSE}
+prizes <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2025/2025-10-28/prizes.csv")
+
+write_csv(prizes, here("years", "2025", "43", "data", "prizes.csv"))
+```
+
+<!-- Summary statistics -->
+
+```{r summary, include=FALSE}
+summary(prizes)
+# 282 are non uk residents
+# 1991-2022 period
+
+prizes |> 
+  filter(degree_institution != "unknown" & degree_institution != "none") |> 
+  summarise(num_universities = n_distinct(degree_institution))
+# 185 universities not including unknown and none 
+
+prizes |> 
+  group_by(degree_field_category) |> 
+  count(degree_field_category) |> 
+  arrange(n)
+# Education, medicine and social work, law some of the least frequent degree fields observed
+
+prizes |> 
+  distinct(sexuality)
+# Unknown, queer and heterosexual
+
+prizes |> 
+  distinct(gender)
+# Man, woman, non-binary and transman. Interestingly no transwomen?
+
+prizes |> 
+  distinct(person_role)
+# Can id between who won and who got shortlisted. Assuming no repeat individuals
+```
+
+<!-- Theme function -->
+
+```{r custom_theme, include=FALSE}
+theme_tt <- function() {
+  theme_classic(base_size = 14) +
+    theme(
+      plot.title = element_text(face = "bold", size = 18),
+      plot.subtitle = element_text(size = 11, margin = margin(b = 6)),
+      plot.caption = element_text(
+        size = 9,
+        color = "grey50",
+        hjust = 0,
+        margin = margin(t = 10)
+      ),
+      plot.caption.position = "plot",
+      plot.margin = margin(10, 75, 10, 10),
+      axis.text.x = element_text(hjust = 0.5),
+      axis.text.y = element_text(size = 11),
+      axis.title.x = element_text(size = 11),
+      panel.grid.major.y = element_line(color = "grey90", linewidth = 0.3),
+      panel.grid.major.x = element_blank(),
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.key.size = unit(0.9, "lines"),
+      strip.background = element_blank(),
+      strip.text = element_text(face = "bold", size = 12)
+    )
+}
+```
+
+### Out of the top 15 universities, what's the rate of winners?
+
+```{r top15_win_percent_calc, include=FALSE}
+top15_win_percent <- prizes |>
+  filter(!degree_institution %in% c("unknown", "none")) |>
+  count(degree_institution, person_role) |>
+  pivot_wider(
+    names_from = person_role,
+    values_from = n,
+    values_fill = 0
+  ) |>
+  mutate(
+    winner = coalesce(winner, 0),
+    shortlisted = coalesce(shortlisted, 0),
+    total_nom = winner + shortlisted,
+    winner_pct = winner / total_nom
+  ) |>
+  arrange(desc(total_nom)) |>
+  slice_head(n = 15) |>
+  arrange(desc(winner_pct)) |>
+  pivot_longer(
+    cols = c("winner", "shortlisted"),
+    names_to = "person_role",
+    values_to = "count"
+  ) |>
+  mutate(
+    percent = if_else(total_nom > 0, count / total_nom, 0),
+    label = if_else(percent == 0, "", paste0(round(percent * 100), "%")),
+    degree_institution = factor(degree_institution, levels = rev(unique(degree_institution))),
+    person_role = factor(person_role, levels = c("shortlisted", "winner"))
+  )
+
+top15_win_percent_totals <- top15_win_percent |>
+  distinct(degree_institution, total_nom) |>
+  mutate(degree_institution = factor(
+    degree_institution,
+    levels = levels(top15_win_percent$degree_institution)
+  ))
+```
+
+```{r top15_win_percent_plot, fig.width=12, fig.height=8}
+top15_win_percent_plot <- ggplot(
+  top15_win_percent,
+  aes(x = degree_institution, y = percent, fill = person_role)
+) +
+  geom_col(width = 0.75) +
+  geom_text(
+    aes(label = label),
+    position = position_stack(vjust = 0.5),
+    size = 3.5,
+    color = "black"
+  ) +
+  geom_text(
+    data = top15_win_percent_totals,
+    inherit.aes = FALSE,
+    aes(
+      x = degree_institution,
+      y = 1.0,
+      label = paste0("    (n = ", total_nom, ")")
+    ),
+    size = 3.5,
+    hjust = 0,
+    vjust = 0.5,
+    color = "grey40"
+  ) +
+  coord_flip(clip = "off") +
+  scale_fill_manual(
+    values = c("winner" = "#66c2a5", "shortlisted" = "#fc8d62"),
+    breaks = c("winner", "shortlisted"),
+    labels = c("Winner", "Shortlisted"),
+    name = NULL
+  ) +
+  scale_y_continuous(
+    labels = percent,
+    expand = expansion(mult = c(0, 0))
+  ) +
+  labs(
+    title = str_wrap(
+      "British literary prize nominees (1990–2022): Share of winners versus shortlisted for top 15 universities",
+      70
+    ),
+    subtitle = "Only nominees with known institutions included | n = total nominees",
+    x = NULL,
+    y = "Share of nominees",
+    caption = "Top 15 universities selected by total nominations\nData: Data Science Learning Community (2024) | Visualisation: Lewis TJ Ward"
+  ) +
+  theme_tt()
+
+ggsave(
+  here("years", "2025", "43", "output", "top15_universities_winner_percent.png"),
+  plot = top15_win_percent_plot,
+  width = 12,
+  height = 8,
+  dpi = 300
+)
+
+top15_win_percent_plot
+```
+
+### Do certain prizes have a higher proportion of LGBTQ+ nominees?
+
+```{r lgbtq_representation_calc, include=FALSE}
+lgbtq_by_prize <- prizes |>
+  filter(uk_residence == TRUE) |>
+  mutate(lgbtq = !(gender %in% c("man", "woman")) | sexuality == "queer") |>
+  count(prize_alias, lgbtq) |>
+  group_by(prize_alias) |>
+  filter(any(lgbtq == TRUE)) |>
+  mutate(
+    total = sum(n),
+    prop = n / total,
+    lgbtq_prop = prop[lgbtq == TRUE][1]
+  ) |>
+  ungroup() |>
+  mutate(
+    prize_alias = str_wrap(prize_alias, width = 25),
+    prize_alias = fct_reorder(prize_alias, lgbtq_prop)
+  )
+
+lgbtq_prize_totals <- lgbtq_by_prize |>
+  distinct(prize_alias, total)
+```
+
+```{r lgbtq_representation_plot, fig.width=12, fig.height=8}
+lgbtq_representation_plot <- ggplot(
+  lgbtq_by_prize,
+  aes(x = prize_alias, y = prop, fill = lgbtq)
+) +
+  geom_col(width = 0.75) +
+  geom_text(
+    aes(label = percent(prop, accuracy = 1)),
+    position = position_stack(vjust = 0.5),
+    size = 3.5,
+    color = "black",
+    hjust = 0.2
+  ) +
+  geom_text(
+    data = lgbtq_prize_totals,
+    inherit.aes = FALSE,
+    aes(
+      x = prize_alias,
+      y = 1.0,
+      label = paste0("    (n = ", total, ")")
+    ),
+    size = 3.5,
+    hjust = 0,
+    vjust = 0.5,
+    color = "grey40"
+  ) +
+  geom_hline(
+    yintercept = 0.037,
+    linetype = "dashed",
+    color = "black",
+    linewidth = 0.5,
+    alpha = 0.5
+  ) +
+  coord_flip(clip = "off") +
+  scale_fill_manual(
+    values = c("FALSE" = "#b2df8a", "TRUE" = "#fb9a99"),
+    labels = c("FALSE" = "Not LGBTQ+", "TRUE" = "LGBTQ+"),
+    breaks = c("TRUE", "FALSE"),
+    name = NULL
+  ) +
+  scale_y_continuous(
+    labels = percent,
+    breaks = c(0, 0.25, 0.5, 1),
+    expand = expansion(mult = c(0, 0))
+  ) +
+  labs(
+    title = str_wrap(
+      "British literary prize nominees (1990–2022): LGBTQ+ representation versus UK baseline",
+      70
+    ),
+    subtitle = "Prizes with ≥1 LGBTQ+ nominee | Dashed line = UK population (3.7%) | n = total nominees",
+    x = NULL,
+    y = "Share of nominees",
+    caption = "Dashed line shows UK population baseline (3.7%, 2021 Census) | Nominees limited to UK residents\nLGBTQ+ status = self-identified non-cisgender and/or non-heterosexual nominees\nData: Data Science Learning Community (2024) | Census data: UK Parliament Commons Library | Visualisation: Lewis TJ Ward"
+  ) +
+  theme_tt()
+
+ggsave(
+  here("years", "2025", "43", "output", "lgbtq_representation_plot.png"),
+  plot = lgbtq_representation_plot,
+  width = 12,
+  height = 8,
+  dpi = 300
+)
+
+lgbtq_representation_plot
+```
+
+### How does the proportion of LGBTQ+ representation change over time?
+
+```{r lgbtq_over_time_calc, include=FALSE}
+lgbtq_over_time <- prizes |>
+  filter(uk_residence == TRUE) |>
+  mutate(lgbtq = !(gender %in% c("man", "woman")) | sexuality == "queer") |>
+  count(prize_year, lgbtq) |>
+  complete(prize_year = full_seq(prize_year, 1), lgbtq, fill = list(n = 0)) |>
+  group_by(prize_year) |>
+  mutate(total_nominees = sum(n)) |>
+  summarise(
+    lgbtq_nominees = n[lgbtq == TRUE],
+    total_nominees = unique(total_nominees),
+    prop_lgbtq = lgbtq_nominees / total_nominees,
+    .groups = "drop"
+  ) |>
+  mutate(
+    prop_lgbtq = replace_na(prop_lgbtq, 0),
+    prize_year = as.integer(prize_year)
+  )
+```
+
+```{r lgbtq_over_time_plot, message=FALSE, fig.width=12, fig.height=8}
+lgbtq_over_time_plot <- ggplot(
+  lgbtq_over_time,
+  aes(x = prize_year, y = prop_lgbtq)
+) +
+    geom_smooth(
+    linewidth = 1.5,
+    color = "#fb9a99",
+    se = FALSE,
+    span = 1
+  ) +
+  geom_point(aes(size = total_nominees), color = "#fb9a99") +
+  geom_hline(
+    yintercept = 0.037,
+    linetype = "dashed",
+    color = "black",
+    linewidth = 0.6,
+    alpha = 0.6
+  ) +
+  scale_size_continuous(name = "Total nominees", range = c(1.5, 6)) +
+  scale_y_continuous(
+    limits = c(0, NA),
+    labels = percent_format(accuracy = 0.1),
+    breaks = function(lims) sort(unique(c(0, pretty(lims, n = 5), 0.037))),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  scale_x_continuous(
+    breaks = seq(
+      min(lgbtq_over_time$prize_year, na.rm = TRUE),
+      max(lgbtq_over_time$prize_year, na.rm = TRUE),
+      by = 1
+    ),
+    labels = function(x) ifelse(x %% 4 == 0, x, ""),
+    expand = expansion(mult = c(0.01, 0.01))
+  ) +
+  labs(
+    title = str_wrap(
+      "British literary prize nominees (1990–2022): LGBTQ+ representation over time versus UK baseline",
+      70
+    ),
+    subtitle = "All UK-resident nominees across all prizes | Dashed line = UK population baseline (3.7%, 2021 Census)",
+    x = "Year",
+    y = "Share of nominees identifying as LGBTQ+",
+    caption = "Point size = total nominees that year | Dashed line shows UK population baseline (3.7%, 2021 Census)\nNominees limited to UK residents | LGBTQ+ status = self-identified non-cisgender and/or non-heterosexual nominees\nData: Data Science Learning Community (2024) | Census data: UK Parliament Commons Library | Visualisation: Lewis TJ Ward"
+  ) +
+  theme_tt() +
+  theme(
+    axis.title.y = element_text(size = 11),
+    legend.position = "right",
+    legend.direction = "vertical",
+    legend.title = element_text(size = 11)
+  )
+
+ggsave(
+  here("years", "2025", "43", "output", "lgbtq_over_time_plot.png"),
+  plot = lgbtq_over_time_plot,
+  width = 12,
+  height = 8,
+  dpi = 300
+)
+
+lgbtq_over_time_plot
+```
+
+### Ethnic diversity across prizes?
+
+```{r ethnicity_calc, include=FALSE}
+ethnicity_prizes <- prizes |>
+  group_by(prize_institution, ethnicity_macro) |>
+  count(prize_institution, name = "n") |>
+  group_by(prize_institution) |>
+  mutate(
+    total_nominees = sum(n),
+    prop = n / total_nominees
+  ) |>
+  ungroup() |>
+  mutate(
+    ethnicity_macro = factor(ethnicity_macro, levels = sort(unique(ethnicity_macro))),
+    prize_institution = str_wrap(prize_institution, width = 20)
+  )
+
+ethnicity_totals <- ethnicity_prizes |>
+  distinct(prize_institution, total_nominees)
+
+present_levels <- sort(unique(as.character(ethnicity_prizes$ethnicity_macro)))
+
+palette_all <- c(
+  "African" = "#4795FF",
+  "Asian" = "#e31a1c",
+  "Black British" = "#b2df8a",
+  "Caribbean" = "#ff7f00",
+  "Irish" = "#33a02c",
+  "Jewish" = "#fb9a99",
+  "Non-UK White" = "#a6cee3",
+  "Non-White American" = "#fdbf6f",
+  "White British" = "#cab2d6"
+)
+
+palette_used <- palette_all[present_levels]
+
+ethnicity_prizes_plot_data <- ethnicity_prizes |>
+  mutate(ethnicity_macro = factor(ethnicity_macro, levels = rev(present_levels))) |>
+  group_by(prize_institution) |>
+  arrange(prize_institution, ethnicity_macro) |>
+  mutate(
+    pct_label = percent(prop, accuracy = 1),
+    label_display = if_else(prop > 0.03, pct_label, NA_character_),
+    ymax = cumsum(prop),
+    ymin = ymax - prop,
+    mid = ymin + prop / 2
+  ) |>
+  ungroup()
+```
+
+```{r ethnicity_plot, fig.width=12, fig.height=8}
+ethnicity_plot <- ggplot(
+  ethnicity_prizes_plot_data,
+  aes(x = prize_institution, y = prop, fill = ethnicity_macro)
+) +
+  geom_col(width = 0.75) +
+  geom_text(
+    aes(label = label_display),
+    position = position_stack(vjust = 0.5),
+    size = 3.5,
+    color = "black",
+    na.rm = TRUE
+  ) +
+  geom_text(
+    data = ethnicity_totals,
+    inherit.aes = FALSE,
+    aes(
+      x = prize_institution,
+      y = 1,
+      label = paste0("    (n = ", total_nominees, ")")
+    ),
+    size = 3.5,
+    hjust = 0,
+    vjust = 0.5,
+    color = "grey40",
+    na.rm = TRUE
+  ) +
+  coord_flip(clip = "off") +
+  scale_fill_manual(
+    values = palette_used,
+    breaks = present_levels,
+    name = "Ethnicity",
+    guide = guide_legend(
+      title.position = "top",
+      title.hjust = 0.5,
+      nrow = 1,
+      byrow = TRUE,
+      override.aes = list(size = 4)
+    )
+  ) +
+  scale_y_continuous(
+    labels = percent,
+    breaks = c(0, 0.25, 0.5, 0.75, 1),
+    expand = expansion(mult = c(0, 0))
+  ) +
+  labs(
+    title = str_wrap(
+      "British literary prize nominees (1990–2022): Ethnic representation per prize institution",
+      70
+    ),
+    subtitle = "Prizes with ≥1 nominee | n = total nominees",
+    x = NULL,
+    y = "Share of nominees",
+    caption = "Values < 3% not labelled\nData: Data Science Learning Community (2024) | Visualisation: Lewis TJ Ward"
+  ) +
+  theme_tt() +
+  theme(
+    legend.title = element_text(size = 11, face = "plain", hjust = 0.5),
+    legend.text = element_text(size = 9),
+    legend.key.width = unit(0.7, "cm"),
+    legend.key.height = unit(0.45, "cm"),
+    legend.spacing.x = unit(0.12, "cm"),
+    legend.margin = margin(t = 6, b = 6),
+    legend.box = "horizontal",
+    legend.box.just = "center"
+  )
+
+ggsave(
+  here("years", "2025", "43", "output", "ethnicity_representation_plot.png"),
+  plot = ethnicity_plot,
+  width = 12,
+  height = 8,
+  dpi = 300
+)
+
+ethnicity_plot
+```

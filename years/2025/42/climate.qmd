@@ -6,10 +6,16 @@ format:
     code-fold: true
 page-layout: article
 ---
+
 <!-- Setup -->
 
 ```{r library, include=FALSE}
-pacman::p_load(scales, here, fs, readxl, writexl, tidyverse, magrittr, broom, gridExtra, ggpmisc, rlang, xfun, usethis, devtools, lubridate, ggdark)
+pacman::p_load(
+  scales,
+  here,
+  tidyverse,
+  lubridate
+)
 ```
 
 <!-- Get data -->
@@ -19,24 +25,18 @@ historic_station_met <- read_csv("https://raw.githubusercontent.com/rfordatascie
 
 station_meta <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2025/2025-10-21/station_meta.csv")
 
-write_csv(historic_station_met, here("years", "2025", "42", "data", "historic_station_met.csv"))
+write_csv(
+  historic_station_met,
+  here("years", "2025", "42", "data", "historic_station_met.csv")
+)
 
-write_csv(station_meta, here("years", "2025", "42", "data", "station_meta.csv"))
+write_csv(
+  station_meta,
+  here("years", "2025", "42", "data", "station_meta.csv")
+)
 ```
 
-
-<!-- # Background
-
-## Potential questions
-
-How has temperature changed over time accross the different countries in the UK?
-
-Does rainfall change across the different countries in the UK?
-
-# Analysis
-
-## Summary statistics -->
-
+<!-- Summary statistics -->
 
 ```{r summary, include=FALSE}
 summary(historic_station_met)
@@ -47,28 +47,20 @@ summary(historic_station_met)
 # rainfall range from 0mm - 568.80mm (month)
 # sunshine hours range from 2.8hours - 350.3 (month)
 
-
 unique(historic_station_met$station)
 # 37 total stations
 
-# Northern Ireland
+# Define country groupings
+ni <- c("armagh", "ballypatrick")
 
-NI <- c("armagh", "ballypatrick")
-
-# Scotland
-
-SCO <- c(
+sco <- c(
   "braemar", "dunstaffnage", "eskdalemuir", "lerwick",
   "leuchars", "nairn", "paisley", "stornoway", "tiree", "wickairport"
 )
 
-# Wales
+wal <- c("aberporth", "cardiff", "cwmystwyth")
 
-WAL <- c("aberporth", "cardiff", "cwmystwyth")
-
-# England
-
-ENG <- c(
+eng <- c(
   "bradford", "camborne", "cambridge", "chivenor", "durham",
   "eastbourne", "heathrow", "hurn", "lowestoft", "manston",
   "newtonrigg", "oxford", "ringway", "rossonwye", "shawbury",
@@ -76,16 +68,14 @@ ENG <- c(
   "waddington", "whitby", "yeovilton"
 )
 
-# Adding country information to dataset
-
+# Add country information to dataset
 station_met_country <- historic_station_met |>
   mutate(country = case_when(
-    station %in% NI ~ "Northern Ireland",
-    station %in% SCO ~ "Scotland",
-    station %in% WAL ~ "Wales",
-    station %in% ENG ~ "England"
+    station %in% ni ~ "Northern Ireland",
+    station %in% sco ~ "Scotland",
+    station %in% wal ~ "Wales",
+    station %in% eng ~ "England"
   ))
-station_met_country
 
 historic_station_met |>
   count(station, sort = TRUE)
@@ -102,8 +92,7 @@ historic_station_met |>
   )
 # confirming coverage is different across the stations
 
-# finding years where countries have coverage:
-
+# Finding years where countries have coverage
 station_met_country |>
   group_by(country) |>
   summarise(
@@ -130,31 +119,50 @@ station_met_country |>
 # analysis should be done from 1942 onwards
 ```
 
-## How has temperature changed over time accross the different countries in the UK?
+<!-- Theme function -->
 
-```{r include=FALSE}
-# Look at how temp change has changed per country from 1942-1952 to 2012-2022?
-#   Around 70 years of change
+```{r custom_theme, include=FALSE}
+theme_tt <- function() {
+  theme_classic(base_size = 14) +
+    theme(
+      plot.title = element_text(face = "bold", size = 18),
+      plot.subtitle = element_text(size = 11, margin = margin(b = 6)),
+      plot.caption = element_text(
+        size = 9,
+        color = "grey50",
+        hjust = 0,
+        margin = margin(t = 10)
+      ),
+      plot.caption.position = "plot",
+      plot.margin = margin(8, 18, 8, 8),
+      axis.text.y = element_text(size = 11),
+      axis.title.x = element_text(size = 11),
+      legend.position = "right",
+      legend.key.size = unit(0.9, "lines"),
+      strip.background = element_blank(),
+      strip.text = element_text(face = "bold", size = 12)
+    )
+}
+```
 
-# -- define early period
-earlystart <- 1942
-earlyend <- 1952
+## How has temperature changed over time across the different countries in the UK?
 
-# -- define late period
-recentstart <- 2012
-recentend <- 2022
+```{r temp_change_calc, include=FALSE}
+# Define analysis periods
+early_start <- 1942
+early_end <- 1952
+recent_start <- 2012
+recent_end <- 2022
 
-# -- select years in two periods, drop others and label
-
+# Select years in two periods and label
 period_df <- station_met_country |>
-  filter(year %in% c(earlystart:earlyend, recentstart:recentend)) |>
+  filter(year %in% c(early_start:early_end, recent_start:recent_end)) |>
   mutate(period = case_when(
-    year %in% earlystart:earlyend ~ paste0(earlystart, "_", earlyend),
-    year %in% recentstart:recentend ~ paste0(recentstart, "_", recentend)
+    year %in% early_start:early_end ~ paste0(early_start, "_", early_end),
+    year %in% recent_start:recent_end ~ paste0(recent_start, "_", recent_end)
   ))
 
-# -- have rows of 12 months per year. need to average into yearly values (one value per station)
-
+# Average monthly values into yearly values (one value per station per year)
 period_avg <- period_df |>
   group_by(station, country, year, period) |>
   summarise(
@@ -163,8 +171,7 @@ period_avg <- period_df |>
     .groups = "drop"
   )
 
-# -- calculate mean for each station across the 10 year period (one value per station per period)
-
+# Calculate mean for each station across the 10 year period
 station_period_avg <- period_avg |>
   group_by(country, station, period) |>
   summarise(
@@ -173,8 +180,7 @@ station_period_avg <- period_avg |>
     .groups = "drop"
   )
 
-# -- calculate mean for each country across 10 year period (one value per country per period)
-
+# Calculate mean for each country across 10 year period
 country_period_avg <- station_period_avg |>
   group_by(country, period) |>
   summarise(
@@ -183,18 +189,16 @@ country_period_avg <- station_period_avg |>
     .groups = "drop"
   )
 
-# -- pivot wide so columns are unique for periods to allow for calculation of temp change
-
-cpa_wide <- country_period_avg |>
+# Pivot wide to calculate temperature change
+country_period_wide <- country_period_avg |>
   pivot_wider(
     names_from = period,
     values_from = c(mean_tmax, mean_tmin),
     names_sep = "_"
   )
 
-# -- calulcate temperature change from 1942-1952 to 2012-2022 (i.e., recent - early) and tidy for plotting
-
-temp_change <- cpa_wide |>
+# Calculate temperature change and prepare for plotting
+temp_change <- country_period_wide |>
   mutate(
     change_tmax = mean_tmax_2012_2022 - mean_tmax_1942_1952,
     change_tmin = mean_tmin_2012_2022 - mean_tmin_1942_1952
@@ -209,54 +213,67 @@ temp_change <- cpa_wide |>
     values_to = "change"
   ) |>
   mutate(
-    variable = recode(variable, "change_tmax" = "Max Temp", "change_tmin" = "Min Temp"),
-    change_label = if_else(is.na(change), "NA", sprintf("%+.2f°C", change))
+    variable = recode(variable,
+      "change_tmax" = "Max Temp",
+      "change_tmin" = "Min Temp"
+    ),
+    change_label = if_else(is.na(change), "NA", sprintf("%+.2f°C", change)),
+    country = fct_reorder(country, change)
   ) |>
   ungroup()
-
-# -- reorder for sake of plotting
-
-temp_change <- temp_change |>
-  mutate(country = fct_reorder(country, change))
 ```
 
-```{r temperature-change, fig.width=10, fig.height=6}
+```{r temp_change_plot, fig.width=10, fig.height=6}
 plot_temp_change <- temp_change |>
   ggplot(aes(x = country, y = change, fill = variable)) +
   geom_col(position = position_dodge(width = 0.8), width = 0.7) +
-  geom_text(aes(label = change_label, hjust = ifelse(change >= 0, -0.08, 1.08)),
+  geom_text(
+    aes(
+      label = change_label,
+      hjust = ifelse(change >= 0, -0.08, 1.08)
+    ),
     position = position_dodge(width = 0.8),
-    size = 3.5, color = "black"
+    size = 3.5,
+    color = "black"
   ) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "grey20", linewidth = 0.75) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    color = "grey20",
+    linewidth = 0.75
+  ) +
   coord_flip(clip = "off") +
-  scale_fill_manual(values = c("Max Temp" = "#fdae61", "Min Temp" = "#91bfdb"), name = NULL) +
+  scale_fill_manual(
+    values = c("Max Temp" = "#fdae61", "Min Temp" = "#91bfdb"),
+    name = NULL
+  ) +
   scale_y_continuous(
     expand = expansion(mult = c(0.15, 0.15)),
     breaks = pretty_breaks(n = 8)
   ) +
   labs(
-    title = paste0("Change in mean annual temperature (", earlystart, "-", earlyend, " to ", recentstart, "-", recentend, ")"),
+    title = paste0(
+      "Change in mean annual temperature (",
+      early_start, "-", early_end, " to ",
+      recent_start, "-", recent_end, ")"
+    ),
     subtitle = "Average change in station temperatures per country",
-    y = "Change (°C)", x = NULL,
+    x = NULL,
+    y = "Change (°C)",
     caption = "Averages attained by averaging at the station level for the period, then annually, then per country.\nData: UK Met Office | Visualisation: Lewis TJ Ward"
   ) +
-  theme_classic(base_size = 14) +
+  theme_tt() +
   theme(
-    plot.title = element_text(face = "bold", size = 18),
-    plot.subtitle = element_text(size = 11, margin = margin(b = 6)),
-    plot.caption = element_text(size = 9, color = "grey50"),
-    axis.text.y = element_text(size = 11),
-    axis.title.x = element_text(size = 11),
     panel.grid.major.y = element_blank(),
-    panel.grid.major.x = element_line(color = "grey90", linewidth = 0.3),
-    legend.position = "right",
-    legend.key.size = unit(0.9, "lines"),
-    plot.margin = margin(8, 18, 8, 8)
+    panel.grid.major.x = element_line(color = "grey90", linewidth = 0.3)
   )
 
-ggsave(here("years", "2025", "42", "output", "mean annual temp changes.png"),
-  plot = plot_temp_change, width = 10, height = 6, dpi = 300
+ggsave(
+  here("years", "2025", "42", "output", "mean_annual_temp_changes.png"),
+  plot = plot_temp_change,
+  width = 10,
+  height = 6,
+  dpi = 300
 )
 
 plot_temp_change
@@ -264,37 +281,37 @@ plot_temp_change
 
 ## Does rainfall change across the different countries in the UK?
 
-```{r include=FALSE}
-# -- summarise annual rainfall per station
+```{r rainfall_calc, include=FALSE}
+# Summarise annual rainfall per station
 annual_rain <- station_met_country |>
   group_by(country, station, year) |>
   summarise(annual_rainfall = sum(rain, na.rm = TRUE), .groups = "drop") |>
   arrange(annual_rainfall)
 
-# -- check how many zero rainfall entries exist
+# Check how many zero rainfall entries exist
 annual_rain |>
   summarise(zero_entries = sum(annual_rainfall == 0, na.rm = TRUE))
 # 61 stations had 0 mm rainfall; assume these are missing values
 
-# -- convert 0 mm to NA
+# Convert 0 mm to NA
 annual_rain <- annual_rain |>
   mutate(annual_rainfall = na_if(annual_rainfall, 0))
 
-# -- calculate mean annual rainfall per country
+# Calculate mean annual rainfall per country
 country_annual_rain <- annual_rain |>
   group_by(country, year) |>
   summarise(mean_annual_rain = mean(annual_rainfall, na.rm = TRUE), .groups = "drop")
 
-# -- check starting year per country
+# Check starting year per country
 country_annual_rain |>
   group_by(country) |>
   summarise(start_year = min(year, na.rm = TRUE))
 
-# -- filter to last 25 years for clarity
+# Filter to last 35 years for clarity
 country_annual_rain <- country_annual_rain |>
   filter(year >= 1989)
 
-# -- classify years by rainfall percentile
+# Classify years by rainfall percentile
 country_annual_rain <- country_annual_rain |>
   group_by(country) |>
   mutate(
@@ -302,11 +319,15 @@ country_annual_rain <- country_annual_rain |>
       mean_annual_rain < quantile(mean_annual_rain, 0.05, na.rm = TRUE) ~ "<5th percentile",
       mean_annual_rain < quantile(mean_annual_rain, 0.25, na.rm = TRUE) ~ "<25th percentile",
       TRUE ~ "≥25th percentile"
+    ),
+    drought_flag = factor(
+      drought_flag,
+      levels = c("<5th percentile", "<25th percentile", "≥25th percentile")
     )
   ) |>
   ungroup()
 
-# -- calculate long-term mean and anomalies
+# Calculate long-term mean and anomalies
 country_annual_rain <- country_annual_rain |>
   group_by(country) |>
   mutate(
@@ -314,32 +335,37 @@ country_annual_rain <- country_annual_rain |>
     rain_anomaly = mean_annual_rain - mean_rain_lta
   ) |>
   ungroup()
-
-# -- ensure consistent ordering of factors
-country_annual_rain$drought_flag <- factor(
-  country_annual_rain$drought_flag,
-  levels = c("<5th percentile", "<25th percentile", "≥25th percentile")
-)
 ```
 
-```{r rainfall-change, fig.width=10, fig.height=6}
+```{r rainfall_plot, fig.width=10, fig.height=6}
 plot_rain_anomaly_year <- country_annual_rain |>
   ggplot(aes(x = year, y = rain_anomaly, fill = drought_flag)) +
-  geom_vline(xintercept = country_annual_rain$year, color = "grey80", linetype = "dotted", linewidth = 0.3) +
+  geom_vline(
+    xintercept = country_annual_rain$year,
+    color = "grey80",
+    linetype = "dotted",
+    linewidth = 0.3
+  ) +
   geom_col(width = 0.6) +
   geom_text(
     data = subset(country_annual_rain, drought_flag == "<5th percentile"),
     aes(
       label = year,
       vjust = ifelse(rain_anomaly >= 0, -0.2, 1.2)
-    ), # proportional offset
+    ),
     size = 3.5,
     fontface = "bold",
     color = "black"
   ) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "grey20", linewidth = 0.75) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    color = "grey20",
+    linewidth = 0.75
+  ) +
   facet_wrap(~country, scales = "fixed") +
-  scale_x_continuous(breaks = seq(min(country_annual_rain$year),
+  scale_x_continuous(breaks = seq(
+    min(country_annual_rain$year),
     max(country_annual_rain$year),
     by = 5
   )) +
@@ -349,11 +375,6 @@ plot_rain_anomaly_year <- country_annual_rain |>
       "<25th percentile" = "#fdae61",
       "≥25th percentile" = "#91bfdb"
     ),
-    labels = c(
-      "<5th percentile" = "<5th percentile",
-      "<25th percentile" = "<25th percentile",
-      "≥25th percentile" = "≥25th percentile"
-    ),
     name = "Annual Rainfall\nPercentile"
   ) +
   scale_y_continuous(
@@ -362,28 +383,24 @@ plot_rain_anomaly_year <- country_annual_rain |>
   ) +
   labs(
     title = "Average annual rainfall versus long-term mean per country (1989-2024)",
-    subtitle = "<5th percentile years labeled in red; <25th percentile years in orange",
-    y = "Difference from long-term average (mm)", x = "Year",
-    caption = "Difference calculated as annual rainfall minus long-term mean per station and country.\nData source: UK Met Office | Visualisation: Lewis TJ Ward"
+    subtitle = "<5th percentile years labeled in red | <25th percentile years in orange",
+    x = "Year",
+    y = "Difference from long-term average (mm)",
+    caption = "Difference calculated as annual rainfall minus long-term mean per station and country.\nData: UK Met Office | Visualisation: Lewis TJ Ward"
   ) +
-  theme_classic(base_size = 14) +
+  theme_tt() +
   theme(
-    plot.title = element_text(face = "bold", size = 18),
-    # plot.subtitle = element_text(size = 11, margin = margin(b = 6)),
-    plot.caption = element_text(size = 9, color = "grey50"),
     axis.text.x = element_text(angle = 45, hjust = 1),
-    axis.title.x = element_text(size = 11),
     panel.grid.major.y = element_line(color = "grey90", linewidth = 0.3),
-    panel.grid.major.x = element_blank(),
-    legend.position = "right",
-    legend.key.size = unit(0.9, "lines"),
-    plot.margin = margin(8, 18, 8, 8),
-    strip.background = element_blank(),
-    strip.text = element_text(face = "bold", size = 12)
+    panel.grid.major.x = element_blank()
   )
 
-ggsave(here("years", "2025", "42", "output", "annual rainfall changes.png"),
-  plot = plot_rain_anomaly_year, width = 11, height = 6, dpi = 300
+ggsave(
+  here("years", "2025", "42", "output", "annual_rainfall_changes.png"),
+  plot = plot_rain_anomaly_year,
+  width = 11,
+  height = 6,
+  dpi = 300
 )
 
 plot_rain_anomaly_year

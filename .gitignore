@@ -10,7 +10,9 @@ _render_cache/
 *.knit.md
 *.nb.html
 /.quarto/
+template.qmd
 
 # -- sys
 .DS_Store
 Thumbs.db
+.Rproj.user
